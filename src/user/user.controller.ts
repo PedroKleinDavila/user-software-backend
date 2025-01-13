@@ -1,9 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SignupUserDto } from './dto/signupUserDto';
 import { CreateUserDto } from './dto/createUserDto';
 import { UpdateUserDto } from './dto/updateUserDto';
-import { LoginUserDto } from './dto/loginDto';
 import { VerifyCodeDto } from './dto/verifyCodeDto';
 @Controller('user')
 export class UserController {
@@ -43,9 +42,10 @@ export class UserController {
 
     //Verification
     @Get('login')
-    async login(@Body() loginUserDto: LoginUserDto) {
-        return this.userService.verifyLogin(loginUserDto);
-    }
+  async login(@Query('email') email: string, @Query('password') password: string) {
+    const data = { email, password };
+    return this.userService.verifyLogin(data); 
+  }
     @Put('code')
     async verifyCode(@Body() verifyCodeDto: VerifyCodeDto) {
         return this.userService.verifyCode(verifyCodeDto);
