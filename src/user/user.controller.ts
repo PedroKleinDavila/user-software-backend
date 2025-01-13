@@ -1,9 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SignupUserDto } from './dto/signupUserDto';
 import { CreateUserDto } from './dto/createUserDto';
 import { UpdateUserDto } from './dto/updateUserDto';
-import { VerifyCodeDto } from './dto/verifyCodeDto';
+import { AuthGuard } from 'src/auth/auth.guard';
 @Controller('user')
 export class UserController {
     constructor(
@@ -14,44 +14,34 @@ export class UserController {
     async signup(@Body() signupUserDto: SignupUserDto) {
         return this.userService.signup(signupUserDto);
     }
+    @UseGuards(AuthGuard)
     @Post('create')
     async create(@Body() createUserDto: CreateUserDto) {
         return this.userService.create(createUserDto);
     }
+    @UseGuards(AuthGuard)
     @Get()
     async findAll() {
         return this.userService.findAll();
     }
+    @UseGuards(AuthGuard)
     @Get('id/:id')
     async findOne(@Param('id') id: string) {
         return this.userService.findOne(id);
     }
+    @UseGuards(AuthGuard)
     @Get('email/:email')
     async findByEmail(@Param('email') email: string) {
         return this.userService.findByEmail(email);
     }
+    @UseGuards(AuthGuard)
     @Put('id/:id')
     async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
         return this.userService.update(id, updateUserDto);
     }
+    @UseGuards(AuthGuard)
     @Delete(':id')
     async remove(@Param('id') id: string) {
         return this.userService.remove(id);
-    }
-
-
-    //Verification
-    @Get('login')
-  async login(@Query('email') email: string, @Query('password') password: string) {
-    const data = { email, password };
-    return this.userService.verifyLogin(data); 
-  }
-    @Put('code')
-    async verifyCode(@Body() verifyCodeDto: VerifyCodeDto) {
-        return this.userService.verifyCode(verifyCodeDto);
-    }
-    @Put('sendEmail/:email')
-    async sendEmail(@Param('email') email: string) {
-        return this.userService.sendEmail(email);
     }
 }

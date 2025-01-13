@@ -1,10 +1,9 @@
+import * as bcrypt from "bcrypt";
 import { Injectable } from "@nestjs/common";
 import { PrismaClient } from "@prisma/client";
 import { CreateUserDto } from "./dto/createUserDto";
 import { SignupUserDto } from "./dto/signupUserDto";
 import { UpdateUserDto } from "./dto/updateUserDto";
-import { LoginUserDto } from "./dto/loginDto";
-import { VerifyCodeDto } from "./dto/verifyCodeDto";
 const prisma = new PrismaClient();
 @Injectable()
 export class UserService {
@@ -12,6 +11,7 @@ export class UserService {
 
     //CRUD
     async create(data: CreateUserDto) {
+        data.password = await this.hashPassword(data.password);
         return await prisma.user.create({
             data: {
                 ...data,
@@ -19,6 +19,7 @@ export class UserService {
         });
     }
     async signup(data: SignupUserDto) {
+        data.password = await this.hashPassword(data.password);
         return await prisma.user.create({
             data: {
                 ...data,
@@ -33,6 +34,13 @@ export class UserService {
             where: {
                 id,
             },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                level: true,
+                password: false,
+            },
         });
     }
     async findByEmail(email: string) {
@@ -43,6 +51,9 @@ export class UserService {
         });
     }
     async update(id: string, data: UpdateUserDto) {
+        if (data.password) {
+            data.password = await this.hashPassword(data.password);
+        }
         return await prisma.user.update({
             where: {
                 id,
@@ -61,53 +72,23 @@ export class UserService {
     }
 
 
-    //Verification
-    async verifyLogin(data: LoginUserDto) {
-        const user = await prisma.user.findUnique({
-            where: {
-                email: data.email,
-                password: data.password,
-            },
-        });
-        if (user) {
-            return user;
+
+    //hashing password
+    async hashPassword(password: string): Promise<string> {
+        try {
+            const hash = await bcrypt.hash(password, 10);
+            return hash;
+        } catch (err) {
+            console.error(err);
+            throw new Error(err);
         }
-        return { message: "Invalid email or password" };
     }
-    async verifyCode(data: VerifyCodeDto) {
-        const user = await prisma.user.findUnique({
-            where: {
-                email: data.email,
-                code: data.code,
-            },
-        });
-        if (user) {
-            return await prisma.user.update({
-                where: {
-                    email: data.email,
-                },
-                data: {
-                    code: -1,
-                    isValid: true,
-                },
-            });
+    async comparePassword(password: string, hash: string): Promise<boolean> {
+        try {
+            return await bcrypt.compare(password, hash);
+        } catch (err) {
+            console.error(err);
+            throw new Error(err);
         }
-        return { message: "Invalid code" };
-    }
-    async sendEmail(email: string) {
-        const user = await this.findByEmail(email);
-        if (user) {
-            //Send email logic
-            await prisma.user.update({
-                where: {
-                    email,
-                },
-                data: {
-                    code: Math.floor(Math.random() * 10000),
-                    isValid: false,
-                },
-            });
-            return { message: "Email sent" };
-        } else { return { message: "Email not found" } }
     }
 }
