@@ -3,6 +3,4 @@ export class User {
     email: string;
     password: string;
     level: number;
-    code: number;
-    isValid: boolean;
 }

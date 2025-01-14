@@ -13,6 +13,4 @@ model User {
     name  String
     password String
     level Int @default(1)
-    code Int @default(-1)
-    isValid Boolean @default(false)
 }
